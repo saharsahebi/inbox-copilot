@@ -7,6 +7,20 @@ from langchain_groq import ChatGroq
 
 app = FastAPI(title="Inbox Copilot API")
 
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI(title="Inbox Copilot API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+
 llm = ChatGroq(api_key=settings.GROQ_API_KEY, model_name=settings.MODEL_NAME, temperature=0.2)
 email_service = EmailService(settings.EMAIL_ADDRESS, settings.EMAIL_PASSWORD)
 workflow_manager = EmailWorkflow(llm, email_service)
