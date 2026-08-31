@@ -5,7 +5,6 @@ from services import EmailService
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 import csv
-from langchain_core.prompts import ChatPromptTemplate
 
 
 class EmailWorkflow:
@@ -19,26 +18,26 @@ class EmailWorkflow:
         try:
             with open(file_path, mode='r', encoding='utf-8') as file:
                 reader = csv.DictReader(file)
-                org_lines = [f"- {row['Role']}: {row['Name']} (ایمیل: {row['Email']})" for row in reader]
+                org_lines = [f"- {row['Role']}: {row['Name']} (Email: {row['Email']})" for row in reader]
                 return "\n".join(org_lines)
         except FileNotFoundError:
-            return "چارت سازمانی یافت نشد."
+            return "Organization chart not found."
 
     def analyze_node(self, state: EmailState):
         org_chart_text = self.load_org_chart()
 
         system_prompt = f"""
-        شما یک دستیار هوشمند سازمانی هستید. ایمیل دریافتی را تحلیل کنید و ۳ پیشنهاد کوتاه برای اقدام (مثل تایید، رد، یا ارجاع) ارائه دهید.
+        You are a smart enterprise AI assistant. Analyze the incoming email and provide 3 short, actionable suggestions (e.g., approve, reject, or escalate).
 
-        در صورت نیاز به ارجاع، حتماً از چارت سازمانی زیر استفاده کنید:
+        If escalation or forwarding is required, you must use the following organizational chart to suggest the correct person:
         {org_chart_text}
 
-        پیشنهادات را فقط به صورت لیست با خط تیره بنویسید و توضیحات اضافه ندهید.
+        Provide the suggestions strictly as a dashed bulleted list (- Action) with no additional conversational text or explanations.
         """
 
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_prompt),
-            ("human", "موضوع: {subject}\nمتن: {body}")
+            ("human", "Subject: {subject}\nBody: {body}")
         ])
 
         chain = prompt | self.llm
@@ -46,12 +45,16 @@ class EmailWorkflow:
 
         actions = [act.strip() for act in response.content.split("\n") if act.strip()]
         return {"suggested_actions": actions, "current_step": "waiting_for_user"}
+
     def draft_node(self, state: EmailState):
-        decision = state.get("user_decision", "پاسخ محترمانه")
+        decision = state.get("user_decision", "polite response")
+
         prompt = ChatPromptTemplate.from_messages([
-            ("system", "یک پاسخ رسمی و کوتاه برای ایمیل به زبان فارسی بر اساس تصمیم کاربر ({decision}) بنویسید."),
-            ("human", "موضوع: {subject}\nمتن: {body}")
+            ("system",
+             "Write a formal, concise email reply based on the user's decision ({decision}). Provide only the email body text without placeholders or meta-commentary."),
+            ("human", "Subject: {subject}\nBody: {body}")
         ])
+
         chain = prompt | self.llm
         draft = chain.invoke({"decision": decision, "subject": state["subject"], "body": state["body"]})
 
