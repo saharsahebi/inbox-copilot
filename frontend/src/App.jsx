@@ -5,10 +5,12 @@ function App() {
   const [emailState, setEmailState] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [draft, setDraft] = useState(null);
+  const [toEmail, setToEmail] = useState('');
 
   const fetchEmail = async () => {
     setIsLoading(true);
     setDraft(null);
+    setToEmail('');
 
     try {
       setTimeout(async () => {
@@ -41,6 +43,10 @@ function App() {
 
       if (response.data.status === 'draft_ready') {
         setDraft(response.data.draft);
+
+        const match = emailState.sender.match(/<([^>]+)>/);
+        const extractedEmail = match ? match[1] : emailState.sender.trim();
+        setToEmail(extractedEmail);
       }
     } catch (error) {
       console.error("Error submitting decision:", error);
@@ -50,22 +56,30 @@ function App() {
   };
 
   const handleConfirmSend = async () => {
+    if (!toEmail) {
+      alert("Please specify a recipient email address.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await axios.post('http://127.0.0.1:8000/api/confirm-send', {
         thread_id: 'thread-1',
-        approved_text: draft
+        approved_text: draft,
+        to_email: toEmail
       });
 
       if (response.data.status === 'sent_successfully') {
-        alert("Email sent successfully! 🚀");
+        alert("Email sent successfully! ");
         setEmailState(null);
         setDraft(null);
+        setToEmail('');
       } else {
         alert("Failed to send the email.");
       }
     } catch (error) {
       console.error("Error confirming send:", error);
+      alert("Error confirming send. Please check the backend logs.");
     } finally {
       setIsLoading(false);
     }
@@ -181,14 +195,13 @@ function App() {
       paddingBottom: '15px',
       marginBottom: '15px'
     },
-    // Updated Email Body constraints to match dark theme
     emailBody: {
-      backgroundColor: 'rgba(2, 6, 23, 0.5)', // Dark translucent background matching the theme
-      color: '#e2e8f0', // Light text for contrast
+      backgroundColor: 'rgba(2, 6, 23, 0.5)',
+      color: '#e2e8f0',
       borderRadius: '6px',
       padding: '15px',
-      maxHeight: '350px', // Prevents layout breaking
-      overflowY: 'auto',  // Enables scrolling for long emails
+      maxHeight: '350px',
+      overflowY: 'auto',
       fontSize: '0.9rem',
       lineHeight: '1.6',
       border: `1px solid ${theme.panelBorder}`,
@@ -219,6 +232,19 @@ function App() {
       lineHeight: '1.5',
       resize: 'vertical',
       boxSizing: 'border-box'
+    },
+    emailInput: {
+      width: '100%',
+      backgroundColor: '#020617',
+      border: `1px solid ${theme.panelBorder}`,
+      color: theme.accentCyan,
+      padding: '10px 15px',
+      borderRadius: '6px',
+      fontFamily: '"Fira Code", monospace',
+      fontSize: '0.9rem',
+      boxSizing: 'border-box',
+      outline: 'none',
+      direction: 'ltr'
     }
   };
 
@@ -226,7 +252,7 @@ function App() {
     <div style={styles.container}>
       <header style={styles.header}>
         <h1 style={styles.title}>
-          <span style={{ color: theme.accentGold }}>⚡</span> AI Inbox Copilot
+          <span style={{ color: theme.accentGold }}></span> AI Inbox Copilot
         </h1>
         <p style={styles.subtitle}>Harnessing Advanced Language Models to Tame Your Communications.</p>
       </header>
@@ -283,7 +309,6 @@ function App() {
                   </div>
                 </div>
 
-                {/* Email Body */}
                 <div
                   dir="auto"
                   style={styles.emailBody}
@@ -300,14 +325,27 @@ function App() {
           {draft && (
             <div style={{...styles.panel, border: `1px solid ${theme.accentGreen}50`}}>
               <div style={{...styles.panelHeader, color: theme.accentGreen, borderBottomColor: `${theme.accentGreen}30`}}>
-                ✅ Draft Ready for Human Review
+                 Draft Ready for Human Review
               </div>
+
+              <div style={{ marginBottom: '15px' }}>
+                 <label style={{ display: 'block', fontSize: '0.8rem', color: theme.textMuted, marginBottom: '5px' }}>Recipient (To):</label>
+                 <input
+                   type="email"
+                   value={toEmail}
+                   onChange={(e) => setToEmail(e.target.value)}
+                   style={styles.emailInput}
+                 />
+              </div>
+
+              <label style={{ display: 'block', fontSize: '0.8rem', color: theme.textMuted, marginBottom: '5px' }}>Message Body:</label>
               <textarea
                 dir="auto"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 style={styles.draftArea}
               />
+
               <button
                 onClick={handleConfirmSend}
                 disabled={isLoading}

@@ -47,7 +47,8 @@ class EmailService:
 
     def send_email(self, to: str, subject: str, body: str) -> bool:
         try:
-            msg = MIMEText(body)
+            # Explicitly setting utf-8 encoding to support Persian text
+            msg = MIMEText(body, 'plain', 'utf-8')
             msg['Subject'] = subject
             msg['From'] = self.email_addr
             msg['To'] = to
@@ -58,4 +59,12 @@ class EmailService:
             return True
         except Exception as e:
             print(f"Error sending email: {e}")
-            return False
+            raise Exception(f"Failed to send email: {str(e)}")
+
+    def send_reply(self, to_email: str, thread_id: str, body: str) -> bool:
+        """
+        Formats and sends a reply based on the thread_id and dynamically passed recipient.
+        """
+        subject = f"Re: Your Email (Thread: {thread_id})"
+
+        return self.send_email(to=to_email, subject=subject, body=body)
