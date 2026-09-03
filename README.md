@@ -23,15 +23,11 @@ The following images demonstrate the system's user interface and operational wor
   <br/>
   <i>Figure 3: Completion of the analysis phase; the agent pauses to present contextually generated action strategies (e.g., Approve, Reject, Escalate) for human decision-making.</i>
   <br/><br/>
-  
-  <img src="assets/4.png" alt="Draft Generation" width="800"/>
-  <br/>
-  <i>Figure 4: Generation of a preliminary response draft following the user's strategic selection.</i>
-  <br/><br/>
+
   
   <img src="assets/5.png" alt="Draft Review Module" width="800"/>
   <br/>
-  <i>Figure 5: The Human-in-the-Loop (HITL) review module, enabling manual verification and modification of both the recipient address and the message body.</i>
+  <i>Figure 4: The Human-in-the-Loop (HITL) review module, enabling manual verification and modification of both the recipient address and the message body.</i>
   <br/><br/>
 
   <img src="assets/6.png" alt="Final Dispatch Execution" width="800"/>
